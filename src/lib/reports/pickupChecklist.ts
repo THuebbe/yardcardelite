@@ -116,5 +116,20 @@ export const generatePickupChecklistContent = (order: Order): string => {
     </div>
   `;
 
-  return content;
+  // Add portrait orientation styling
+  return `
+    <style>
+      @page {
+        size: portrait;
+      }
+      @media print {
+        body {
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+      }
+    </style>
+    ${content}
+  `;
 };

@@ -212,8 +212,20 @@ export const generateOrderSummaryContent = (order: Order): string => {
     </div>
   `;
 
-  // Combine all sections
+  // Combine all sections with portrait orientation styling
   return `
+    <style>
+      @page {
+        size: portrait;
+      }
+      @media print {
+        body {
+          width: 100%;
+          margin: 0;
+          padding: 0;
+        }
+      }
+    </style>
     ${customerSection}
     ${previewSection}
     ${signDetailsSection}

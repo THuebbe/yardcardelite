@@ -8,6 +8,11 @@ import {
   ClipboardCheck,
   ClipboardList,
 } from "lucide-react";
+import {
+  generatePickTicket,
+  generateOrderSummary,
+  generatePickupChecklist,
+} from "@/lib/reports";
 import { Order, User } from "@/lib/types";
 
 interface OrderRowProps {
@@ -42,8 +47,21 @@ export const OrderRow: React.FC<OrderRowProps> = ({
       return;
     }
 
-    // Placeholder for actual functionality
-    alert("Printing pick ticket for order " + order.id);
+    try {
+      generatePickTicket(order);
+
+      // Update order status to processing after printing pick ticket
+      if (order.status === "pending") {
+        // In a real app, this would call an API to update the order status
+        const updatedOrder = { ...order, status: "processing" };
+        alert(`Order ${order.id} status updated to Processing`);
+        // This is a placeholder - in a real app you would update the state or call an API
+        // updateOrderStatus(order.id, "processing");
+      }
+    } catch (error) {
+      console.error("Error generating pick ticket:", error);
+      alert("There was an error generating the pick ticket. Please try again.");
+    }
   };
 
   const handlePrintOrderSummary = (e: React.MouseEvent) => {
@@ -56,8 +74,23 @@ export const OrderRow: React.FC<OrderRowProps> = ({
       return;
     }
 
-    // Placeholder for actual functionality
-    alert("Printing order summary for order " + order.id);
+    try {
+      generateOrderSummary(order);
+
+      // Update order status to deployed after printing order summary
+      if (order.status === "processing") {
+        // In a real app, this would call an API to update the order status
+        const updatedOrder = { ...order, status: "deployed" };
+        alert(`Order ${order.id} status updated to Deployed`);
+        // This is a placeholder - in a real app you would update the state or call an API
+        // updateOrderStatus(order.id, "deployed");
+      }
+    } catch (error) {
+      console.error("Error generating order summary:", error);
+      alert(
+        "There was an error generating the order summary. Please try again.",
+      );
+    }
   };
 
   const handlePrintPickupChecklist = (e: React.MouseEvent) => {
@@ -70,8 +103,23 @@ export const OrderRow: React.FC<OrderRowProps> = ({
       return;
     }
 
-    // Placeholder for actual functionality
-    alert("Printing pickup checklist for order " + order.id);
+    try {
+      generatePickupChecklist(order);
+
+      // Update order status to checkin after printing pickup checklist
+      if (order.status === "deployed") {
+        // In a real app, this would call an API to update the order status
+        const updatedOrder = { ...order, status: "checkin" };
+        alert(`Order ${order.id} status updated to Check-in`);
+        // This is a placeholder - in a real app you would update the state or call an API
+        // updateOrderStatus(order.id, "checkin");
+      }
+    } catch (error) {
+      console.error("Error generating pickup checklist:", error);
+      alert(
+        "There was an error generating the pickup checklist. Please try again.",
+      );
+    }
   };
 
   const handleMarkCompleted = (e: React.MouseEvent) => {

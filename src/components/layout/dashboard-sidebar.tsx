@@ -40,7 +40,7 @@ export function DashboardSidebar() {
       ),
     },
     {
-      href: "/dashboard/orders",
+      href: "/orders",
       label: "Orders",
       section: "agency",
       icon: (
