@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Printer,
   History,
@@ -7,13 +7,15 @@ import {
   RefreshCw,
   ClipboardCheck,
   ClipboardList,
+  Loader2,
 } from "lucide-react";
 import {
   generatePickTicket,
   generateOrderSummary,
   generatePickupChecklist,
+  getOrderReports,
 } from "@/lib/reports";
-import { Order, User } from "@/lib/types";
+import { Order, User, OrderStatus } from "@/lib/types";
 
 interface OrderRowProps {
   order: Order;
@@ -34,10 +36,47 @@ export const OrderRow: React.FC<OrderRowProps> = ({
   toggleReportHistory,
   toggleCheckIn,
 }) => {
-  // Placeholder for order reports functionality
-  const orderReports = order.reports || [];
+  const [isLoading, setIsLoading] = useState(false);
+  const [reports, setReports] = useState(order.reports || []);
 
-  const handlePrintPickTicket = (e: React.MouseEvent) => {
+  // Fetch reports when needed
+  const fetchReports = async () => {
+    try {
+      const fetchedReports = await getOrderReports(order.id);
+      setReports(fetchedReports);
+      return fetchedReports;
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      return [];
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update order status");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePrintPickTicket = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (!order.previewSlots || !order.eventDate) {
@@ -48,23 +87,34 @@ export const OrderRow: React.FC<OrderRowProps> = ({
     }
 
     try {
-      generatePickTicket(order);
+      setIsLoading(true);
+      await generatePickTicket(order);
+
+      // Fetch updated reports after generating a new one
+      await fetchReports();
 
       // Update order status to processing after printing pick ticket
       if (order.status === "pending") {
-        // In a real app, this would call an API to update the order status
-        const updatedOrder = { ...order, status: "processing" };
-        alert(`Order ${order.id} status updated to Processing`);
-        // This is a placeholder - in a real app you would update the state or call an API
-        // updateOrderStatus(order.id, "processing");
+        try {
+          await updateOrderStatus(order.id, "processing");
+          alert(`Order ${order.id} status updated to Processing`);
+          // Refresh the order list
+          window.location.reload();
+        } catch (error) {
+          alert(
+            `Failed to update order status: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+        }
       }
     } catch (error) {
       console.error("Error generating pick ticket:", error);
       alert("There was an error generating the pick ticket. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handlePrintOrderSummary = (e: React.MouseEvent) => {
+  const handlePrintOrderSummary = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (!order.previewSlots || !order.eventDate) {
@@ -75,25 +125,36 @@ export const OrderRow: React.FC<OrderRowProps> = ({
     }
 
     try {
-      generateOrderSummary(order);
+      setIsLoading(true);
+      await generateOrderSummary(order);
+
+      // Fetch updated reports after generating a new one
+      await fetchReports();
 
       // Update order status to deployed after printing order summary
       if (order.status === "processing") {
-        // In a real app, this would call an API to update the order status
-        const updatedOrder = { ...order, status: "deployed" };
-        alert(`Order ${order.id} status updated to Deployed`);
-        // This is a placeholder - in a real app you would update the state or call an API
-        // updateOrderStatus(order.id, "deployed");
+        try {
+          await updateOrderStatus(order.id, "deployed");
+          alert(`Order ${order.id} status updated to Deployed`);
+          // Refresh the order list
+          window.location.reload();
+        } catch (error) {
+          alert(
+            `Failed to update order status: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+        }
       }
     } catch (error) {
       console.error("Error generating order summary:", error);
       alert(
         "There was an error generating the order summary. Please try again.",
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handlePrintPickupChecklist = (e: React.MouseEvent) => {
+  const handlePrintPickupChecklist = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (!order.previewSlots || !order.eventDate) {
@@ -104,49 +165,84 @@ export const OrderRow: React.FC<OrderRowProps> = ({
     }
 
     try {
-      generatePickupChecklist(order);
+      setIsLoading(true);
+      await generatePickupChecklist(order);
+
+      // Fetch updated reports after generating a new one
+      await fetchReports();
 
       // Update order status to checkin after printing pickup checklist
       if (order.status === "deployed") {
-        // In a real app, this would call an API to update the order status
-        const updatedOrder = { ...order, status: "checkin" };
-        alert(`Order ${order.id} status updated to Check-in`);
-        // This is a placeholder - in a real app you would update the state or call an API
-        // updateOrderStatus(order.id, "checkin");
+        try {
+          await updateOrderStatus(order.id, "checkin");
+          alert(`Order ${order.id} status updated to Check-in`);
+          // Refresh the order list
+          window.location.reload();
+        } catch (error) {
+          alert(
+            `Failed to update order status: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
+        }
       }
     } catch (error) {
       console.error("Error generating pickup checklist:", error);
       alert(
         "There was an error generating the pickup checklist. Please try again.",
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleMarkCompleted = (e: React.MouseEvent) => {
+  const handleMarkCompleted = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm("Mark this order as completed?")) {
-      // Placeholder for actual functionality
-      alert("Order " + order.id + " marked as completed");
+      try {
+        await updateOrderStatus(order.id, "completed");
+        alert(`Order ${order.id} marked as completed`);
+        // Refresh the order list
+        window.location.reload();
+      } catch (error) {
+        alert(
+          `Failed to update order status: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
     }
   };
 
-  const handleCancelOrder = (e: React.MouseEvent) => {
+  const handleCancelOrder = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to cancel this order?")) {
-      // Placeholder for actual functionality
-      alert("Order " + order.id + " cancelled");
+      try {
+        await updateOrderStatus(order.id, "cancelled");
+        alert(`Order ${order.id} has been cancelled`);
+        // Refresh the order list
+        window.location.reload();
+      } catch (error) {
+        alert(
+          `Failed to cancel order: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
     }
   };
 
-  const handleResetOrderStatus = (e: React.MouseEvent) => {
+  const handleResetOrderStatus = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (
       window.confirm(
         "Reset this order to Pending status? This is for testing purposes only.",
       )
     ) {
-      // Placeholder for actual functionality
-      alert("Order " + order.id + " reset to pending status");
+      try {
+        await updateOrderStatus(order.id, "pending");
+        alert(`Order ${order.id} has been reset to pending status`);
+        // Refresh the order list
+        window.location.reload();
+      } catch (error) {
+        alert(
+          `Failed to reset order status: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
     }
   };
 
@@ -164,7 +260,9 @@ export const OrderRow: React.FC<OrderRowProps> = ({
           "Unknown"}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {new Date(order.createdAt).toLocaleDateString()}
+        {order.createdAt
+          ? new Date(order.createdAt).toLocaleDateString()
+          : "N/A"}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <span
@@ -182,11 +280,13 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                       : "bg-red-100 text-red-800"
           }`}
         >
-          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          {order.status
+            ? order.status.charAt(0).toUpperCase() + order.status.slice(1)
+            : "Unknown"}
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        ${order.totalAmount.toFixed(2)}
+        ${order.totalAmount ? order.totalAmount.toFixed(2) : "0.00"}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <div className="flex items-center space-x-3">
@@ -195,8 +295,13 @@ export const OrderRow: React.FC<OrderRowProps> = ({
               onClick={handlePrintPickTicket}
               className="text-blue-600 hover:text-blue-900 group relative"
               title="Print Pick Ticket"
+              disabled={isLoading}
             >
-              <Printer className="h-5 w-5" />
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Printer className="h-5 w-5" />
+              )}
               <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                 Print Pick Ticket
               </span>
@@ -208,8 +313,13 @@ export const OrderRow: React.FC<OrderRowProps> = ({
               onClick={handlePrintOrderSummary}
               className="text-blue-600 hover:text-blue-900 group relative"
               title="Print Order Summary"
+              disabled={isLoading}
             >
-              <Printer className="h-5 w-5" />
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Printer className="h-5 w-5" />
+              )}
               <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                 Print Order Summary
               </span>
@@ -222,8 +332,13 @@ export const OrderRow: React.FC<OrderRowProps> = ({
                 onClick={handlePrintPickupChecklist}
                 className="text-blue-600 hover:text-blue-900 group relative"
                 title="Print Pickup Checklist"
+                disabled={isLoading}
               >
-                <ClipboardCheck className="h-5 w-5" />
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ClipboardCheck className="h-5 w-5" />
+                )}
                 <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                   Print Pickup Checklist
                 </span>
@@ -241,7 +356,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
             </>
           )}
 
-          {orderReports.length > 0 && (
+          {reports.length > 0 && (
             <button
               onClick={(e) => toggleReportHistory(order.id, e)}
               className="text-gray-600 hover:text-blue-900 group relative"
@@ -249,7 +364,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
             >
               <History className="h-5 w-5" />
               <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                Report History ({orderReports.length})
+                Report History ({reports.length})
               </span>
             </button>
           )}

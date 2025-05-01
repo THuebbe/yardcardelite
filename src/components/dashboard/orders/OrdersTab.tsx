@@ -81,19 +81,23 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         const matchesId = order.id.toLowerCase().includes(searchLower);
+
+        // Get customer info either from order.customerInfo or from customers array
+        const customer = order.customerInfo?.name
+          ? order.customerInfo
+          : getCustomerById(order.userId);
+
         const matchesCustomer =
-          order.customerInfo?.name?.toLowerCase().includes(searchLower) ||
-          false;
+          customer?.name?.toLowerCase().includes(searchLower) || false;
         const matchesEmail =
-          order.customerInfo?.email?.toLowerCase().includes(searchLower) ||
-          false;
+          customer?.email?.toLowerCase().includes(searchLower) || false;
 
         return matchesId || matchesCustomer || matchesEmail;
       }
 
       return true;
     });
-  }, [orders, statusFilter, searchTerm]);
+  }, [orders, statusFilter, searchTerm, customers]);
 
   return (
     <div className="bg-white shadow rounded-lg p-6">

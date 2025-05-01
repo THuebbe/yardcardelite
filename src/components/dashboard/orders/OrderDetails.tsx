@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Order, ReportHistory } from "@/lib/types";
 import {
   reprintReport,
   generateOrderSummary,
   generatePickTicket,
   generatePickupChecklist,
+  getOrderReports,
 } from "@/lib/reports";
 import { formatPhoneNumber } from "@/lib/utils";
-import { Printer, FileText, Clipboard, History } from "lucide-react";
+import { Printer, FileText, Clipboard, History, Loader2 } from "lucide-react";
 import OrderReportHistory from "./OrderReportHistory";
 
 interface OrderDetailsProps {
@@ -28,16 +29,69 @@ const SignPreview = ({
 );
 
 export const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
-  const handleGenerateOrderSummary = () => {
-    generateOrderSummary(order);
+  const [isLoading, setIsLoading] = useState(false);
+  const [reports, setReports] = useState<ReportHistory[]>([]);
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const fetchedReports = await getOrderReports(order.id);
+        setReports(fetchedReports);
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+      }
+    };
+
+    fetchReports();
+  }, [order.id]);
+
+  const handleGenerateOrderSummary = async () => {
+    try {
+      setIsLoading(true);
+      await generateOrderSummary(order);
+      // Refresh reports after generating a new one
+      const updatedReports = await getOrderReports(order.id);
+      setReports(updatedReports);
+    } catch (error) {
+      console.error("Error generating order summary:", error);
+      alert(
+        "There was an error generating the order summary. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGeneratePickTicket = () => {
-    generatePickTicket(order);
+  const handleGeneratePickTicket = async () => {
+    try {
+      setIsLoading(true);
+      await generatePickTicket(order);
+      // Refresh reports after generating a new one
+      const updatedReports = await getOrderReports(order.id);
+      setReports(updatedReports);
+    } catch (error) {
+      console.error("Error generating pick ticket:", error);
+      alert("There was an error generating the pick ticket. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGeneratePickupChecklist = () => {
-    generatePickupChecklist(order);
+  const handleGeneratePickupChecklist = async () => {
+    try {
+      setIsLoading(true);
+      await generatePickupChecklist(order);
+      // Refresh reports after generating a new one
+      const updatedReports = await getOrderReports(order.id);
+      setReports(updatedReports);
+    } catch (error) {
+      console.error("Error generating pickup checklist:", error);
+      alert(
+        "There was an error generating the pickup checklist. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -225,22 +279,37 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 <button
                   onClick={handleGenerateOrderSummary}
                   className="flex items-center px-3 py-2 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+                  disabled={isLoading}
                 >
-                  <FileText className="h-4 w-4 mr-2" />
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <FileText className="h-4 w-4 mr-2" />
+                  )}
                   Order Summary
                 </button>
                 <button
                   onClick={handleGeneratePickTicket}
                   className="flex items-center px-3 py-2 bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors"
+                  disabled={isLoading}
                 >
-                  <Printer className="h-4 w-4 mr-2" />
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Printer className="h-4 w-4 mr-2" />
+                  )}
                   Pick Ticket
                 </button>
                 <button
                   onClick={handleGeneratePickupChecklist}
                   className="flex items-center px-3 py-2 bg-amber-50 text-amber-700 rounded hover:bg-amber-100 transition-colors"
+                  disabled={isLoading}
                 >
-                  <Clipboard className="h-4 w-4 mr-2" />
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Clipboard className="h-4 w-4 mr-2" />
+                  )}
                   Pickup Checklist
                 </button>
               </div>
@@ -248,7 +317,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           </div>
 
           {/* Reports History Section */}
-          <OrderReportHistory order={order} />
+          <OrderReportHistory order={{ ...order, reports }} />
         </div>
       </div>
     </div>

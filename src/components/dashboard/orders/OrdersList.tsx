@@ -119,7 +119,11 @@ export const OrdersList: React.FC<OrdersListProps> = ({
                   </tr>
                 )}
                 {showReportHistory === order.id && (
-                  <OrderReportHistory order={order} />
+                  <tr>
+                    <td colSpan={6} className="p-0">
+                      <OrderReportHistory order={order} />
+                    </td>
+                  </tr>
                 )}
                 {showCheckIn === order.id && (
                   <CheckInSection
