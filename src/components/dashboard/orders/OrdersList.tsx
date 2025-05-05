@@ -54,7 +54,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({
               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
               onClick={() => onSort("id")}
             >
-              Order ID{getSortIndicator("id")}
+              Order Number{getSortIndicator("id")}
             </th>
             <th
               scope="col"
@@ -101,7 +101,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({
             </tr>
           ) : (
             filteredOrders.map((order) => (
-              <React.Fragment key={order.id}>
+              <React.Fragment key={`order-row-${order.id}`}>
                 <OrderRow
                   order={order}
                   isExpanded={expandedOrderId === order.id}
@@ -112,14 +112,14 @@ export const OrdersList: React.FC<OrdersListProps> = ({
                   toggleCheckIn={toggleCheckIn}
                 />
                 {expandedOrderId === order.id && (
-                  <tr>
+                  <tr key={`order-details-${order.id}`}>
                     <td colSpan={6} className="p-0">
                       <OrderDetails order={order} />
                     </td>
                   </tr>
                 )}
                 {showReportHistory === order.id && (
-                  <tr>
+                  <tr key={`order-report-history-${order.id}`}>
                     <td colSpan={6} className="p-0">
                       <OrderReportHistory order={order} />
                     </td>
@@ -127,6 +127,7 @@ export const OrdersList: React.FC<OrdersListProps> = ({
                 )}
                 {showCheckIn === order.id && (
                   <CheckInSection
+                    key={`order-check-in-${order.id}`}
                     order={order}
                     onComplete={onCheckInComplete}
                   />

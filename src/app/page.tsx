@@ -27,16 +27,16 @@ export default function HomePage() {
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Link href="/signup">
                     <Button size="lg" className="w-full min-[400px]:w-auto">
-                      Get Started
+                      Sign Up Free
                     </Button>
                   </Link>
-                  <Link href="/demo">
+                  <Link href="/login">
                     <Button
                       size="lg"
                       variant="outline"
                       className="w-full min-[400px]:w-auto"
                     >
-                      Book a Demo
+                      Sign In
                     </Button>
                   </Link>
                 </div>
@@ -307,7 +307,16 @@ export default function HomePage() {
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <Link href="/signup">
                   <Button size="lg" className="w-full min-[400px]:w-auto">
-                    Start Your Free Trial
+                    Create Your Account
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full min-[400px]:w-auto"
+                  >
+                    Sign In
                   </Button>
                 </Link>
               </div>

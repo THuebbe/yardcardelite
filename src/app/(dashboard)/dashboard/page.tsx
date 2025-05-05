@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,8 +10,58 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PricingTable } from "@/components/PricingTable";
+import { useAuth } from "@/components/auth/AuthContext";
 
 export default function DashboardPage() {
+  const { subscription, isLoading } = useAuth();
+  const [showPricingTable, setShowPricingTable] = useState(false);
+
+  useEffect(() => {
+    // If subscription data is loaded and user doesn't have an active subscription
+    if (!isLoading && (!subscription || !subscription.isActive)) {
+      setShowPricingTable(true);
+    } else {
+      setShowPricingTable(false);
+    }
+  }, [subscription, isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (showPricingTable) {
+    return (
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex items-center justify-between space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">
+            Welcome to YardCard Elite
+          </h2>
+        </div>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Get Started with a Subscription</CardTitle>
+            <CardDescription>
+              Choose a subscription plan to access all features of YardCard
+              Elite
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>
+              Your account has been created successfully, but you need to
+              subscribe to a plan to access all features.
+            </p>
+          </CardContent>
+        </Card>
+        <PricingTable />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">

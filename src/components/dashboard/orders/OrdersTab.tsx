@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Order, User } from "@/lib/types";
 import { OrdersFilter } from "./OrdersFilter";
 import { OrdersList } from "./OrdersList";
+import { OrdersDebug } from "./OrdersDebug";
 
 interface OrdersTabProps {
   orders: Order[];
@@ -102,6 +103,13 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-6">Orders</h2>
+      <OrdersDebug
+        orders={orders}
+        filteredOrders={filteredOrders}
+        customers={customers}
+        searchTerm={searchTerm}
+        statusFilter={statusFilter}
+      />
       <OrdersFilter
         searchTerm={searchTerm}
         statusFilter={statusFilter}

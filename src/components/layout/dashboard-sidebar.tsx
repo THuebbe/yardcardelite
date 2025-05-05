@@ -4,16 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "../theme-switcher";
+import { useAuth } from "@/components/auth/AuthContext";
 
 interface SidebarLink {
   href: string;
   label: string;
   icon: React.ReactNode;
   section?: string;
+  requiresSubscription?: boolean;
 }
 
-export function DashboardSidebar() {
+export default function DashboardSidebar() {
   const pathname = usePathname();
+  const { user, subscription, signOut } = useAuth();
 
   const links: SidebarLink[] = [
     // Agency Related Section
@@ -21,6 +24,7 @@ export function DashboardSidebar() {
       href: "/dashboard",
       label: "Dashboard",
       section: "agency",
+      requiresSubscription: false,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -43,6 +47,7 @@ export function DashboardSidebar() {
       href: "/orders",
       label: "Orders",
       section: "agency",
+      requiresSubscription: true,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -65,6 +70,7 @@ export function DashboardSidebar() {
       href: "/booking-link",
       label: "Booking Link",
       section: "agency",
+      requiresSubscription: true,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -85,6 +91,7 @@ export function DashboardSidebar() {
       href: "/dashboard/clients",
       label: "Clients",
       section: "agency",
+      requiresSubscription: true,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -107,6 +114,7 @@ export function DashboardSidebar() {
       href: "/dashboard/signs",
       label: "Signs",
       section: "agency",
+      requiresSubscription: true,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -127,6 +135,7 @@ export function DashboardSidebar() {
       href: "/dashboard/price-packages",
       label: "Price Packages",
       section: "agency",
+      requiresSubscription: true,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -151,6 +160,7 @@ export function DashboardSidebar() {
       href: "/profile",
       label: "Profile",
       section: "agent-top",
+      requiresSubscription: false,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -171,6 +181,7 @@ export function DashboardSidebar() {
       href: "/dashboard/settings",
       label: "Settings",
       section: "agent-top",
+      requiresSubscription: false,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -191,6 +202,7 @@ export function DashboardSidebar() {
       href: "/dashboard/help",
       label: "Help",
       section: "agent-top",
+      requiresSubscription: false,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -212,6 +224,7 @@ export function DashboardSidebar() {
       href: "/dashboard/subscription",
       label: "My Subscription",
       section: "agent-bottom",
+      requiresSubscription: false,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -229,9 +242,10 @@ export function DashboardSidebar() {
       ),
     },
     {
-      href: "/",
+      href: "#",
       label: "Sign Out",
       section: "agent-bottom",
+      requiresSubscription: false,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -254,8 +268,27 @@ export function DashboardSidebar() {
   const renderLinks = (section: string) => {
     return links
       .filter((link) => link.section === section)
+      .filter(
+        (link) =>
+          !link.requiresSubscription || (subscription && subscription.isActive),
+      )
       .map((link) => {
         const isActive = pathname === link.href;
+
+        // Special handling for sign out link
+        if (link.label === "Sign Out") {
+          return (
+            <button
+              key={link.href}
+              onClick={() => signOut()}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-all text-muted-foreground hover:bg-secondary hover:text-secondary-foreground`}
+            >
+              {link.icon}
+              {link.label}
+            </button>
+          );
+        }
+
         return (
           <Link
             key={link.href}
@@ -318,8 +351,12 @@ export function DashboardSidebar() {
               </svg>
             </div>
             <div className="grid gap-0.5">
-              <p className="text-sm font-medium">John Doe</p>
-              <p className="text-xs text-muted-foreground">john@example.com</p>
+              <p className="text-sm font-medium">
+                {user?.email?.split("@")[0] || "User"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {user?.email || ""}
+              </p>
             </div>
           </div>
           <ThemeSwitcher />

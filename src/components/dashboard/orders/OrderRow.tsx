@@ -252,7 +252,7 @@ export const OrderRow: React.FC<OrderRowProps> = ({
       onClick={() => toggleOrderExpansion(order.id)}
     >
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        #{order.id.substring(0, 8)}
+        #{order.order_number ? order.order_number : order.id.substring(0, 8)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         {order.customerInfo?.name ||
